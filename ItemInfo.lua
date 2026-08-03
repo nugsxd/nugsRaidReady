@@ -4,7 +4,7 @@
 -- Unauthorized copying, distribution, or modification is prohibited. See LICENSE.
 --------------------------------------------------------------------------------
 -- RaidReady  -  ItemInfo.lua
--- A verification helper: toggle with "/rr ids" to add the item ID to every item
+-- A verification helper: toggle with "/nrr ids" to add the item ID to every item
 -- tooltip. Used to capture exact consumable item IDs (including each rank) when
 -- building the Raid Consumables preset lists.
 local ADDON_NAME, RAA = ...

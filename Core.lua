@@ -770,8 +770,8 @@ local function RegisterWithSuite()
         title      = "nugsRaidReady",
         version    = RAA.version,
         icon       = "Interface\\AddOns\\nugsRaidReady\\icon",
-        slash      = "/rr",
-        -- Matches what typing /rr does, rather than always opening the leader view
+        slash      = "/nrr",
+        -- Matches what typing /nrr does, rather than always opening the leader view
         -- to a raider who cannot use it.
         Open       = function()
             if RAA:CanLeadCheck() then RAA:ToggleUI() else RAA:ToggleRaiderView() end
@@ -832,7 +832,7 @@ boot:SetScript("OnEvent", function(_, event, arg1)
         end
         RAA:UpdateLeaderState()
         print("|cff33ff99RaidReady|r v" .. RAA.version ..
-              " loaded. Type |cffffff00/rr|r to open.")
+              " loaded. Type |cffffff00/nrr|r to open.")
     else
         -- roster/leadership changed
         RAA:UpdateLeaderState()
@@ -840,7 +840,7 @@ boot:SetScript("OnEvent", function(_, event, arg1)
 end)
 
 -- Slash command
-SLASH_RAIDREADY1 = "/rr"
+SLASH_RAIDREADY1 = "/nrr"
 SLASH_RAIDREADY2 = "/raidready"
 SlashCmdList["RAIDREADY"] = function(msg)
     msg = (msg or ""):lower():gsub("%s+", "")

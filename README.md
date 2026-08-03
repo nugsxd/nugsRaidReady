@@ -13,7 +13,7 @@ and members share the relevant slice with each other over WoW's addon-message
 channels.
 
 1. Every raider installs this addon. It listens silently.
-2. The leader opens the window (`/rr`), sets the **required addons** (folder name
+2. The leader opens the window (`/nrr`), sets the **required addons** (folder name
    + optional minimum version), and clicks **Check Raid**.
 3. The leader broadcasts just the required names over the `RAID` channel.
 4. Each raider's copy replies (whispered back, staggered to respect Blizzard's
@@ -44,8 +44,8 @@ current patch. Find the number in-game with:
 
 ## Usage
 
-- `/rr` — open/close the window
-- `/rr check` — run a check immediately
+- `/nrr` — open/close the window
+- `/nrr check` — run a check immediately
 
 Only the **raid leader or an assistant** can run a check (the button is greyed
 out otherwise). When solo, it's always enabled so you can test yourself.
@@ -61,7 +61,7 @@ or **"Offline"** (grey, not counted as an issue).
 
 Optionally, tick **"Whisper players to update or install"** to whisper, when a
 check finishes: out-of-date/missing raiders get *"You have out of date addons,
-type /rr to view"*, and **"No addon"** players get *"Please install the Raid
+type /nrr to view"*, and **"No addon"** players get *"Please install the Raid
 Addon Audit addon..."*. Offline players are skipped (no whisper errors). Whispers
 are staggered to avoid the spam filter. Off by default.
 

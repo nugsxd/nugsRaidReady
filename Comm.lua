@@ -161,7 +161,7 @@ function RAA:OnScoreReport(sender, score)
 
     local target = Ambiguate(sender, "none")
     local msg = "RaidReady: your score is " .. score .. " (below " .. threshold
-                .. "). Type /rr to see what's missing."
+                .. "). Type /nrr to see what's missing."
     C_Timer.After(math.random() * 1.5, function()
         SendChatMessage(msg, "WHISPER", nil, target)
     end)
@@ -239,7 +239,7 @@ function RAA:InitComm()
             -- Show the raider their own status locally (skip our own echo).
             local me = RAA.NameKey(GetUnitName("player", true) or UnitName("player"))
             if RAA.NameKey(sender) ~= me then
-                -- Remember it so the raider can reopen their box with /rr.
+                -- Remember it so the raider can reopen their box with /nrr.
                 RAA.lastReqMap = reqMap
                 RAA.lastRequester = sender
                 if RAA.ShowRaiderView then RAA:ShowRaiderView(reqMap, sender) end
@@ -282,7 +282,7 @@ function RAA:StartCheck()
 
     local required = self:RequiredNames()
     if #required == 0 then
-        print("|cff33ff99RaidReady|r: no required addons set. Open |cffffff00/rr|r and add some first.")
+        print("|cff33ff99RaidReady|r: no required addons set. Open |cffffff00/nrr|r and add some first.")
         if self.ShowUI then self:ShowUI() end
         return
     end
@@ -333,7 +333,7 @@ end
 -- are skipped (we don't know what they're missing), and we never whisper ourself.
 function RAA:WhisperOffenders(session)
     local myKey = RAA.NameKey(GetUnitName("player", true) or UnitName("player"))
-    local outdatedMsg = "You have out of date addons, type /rr to view"
+    local outdatedMsg = "You have out of date addons, type /nrr to view"
     local installMsg  = "Please install the RaidReady addon so the raid leader can check your required addons."
     local i = 0
     for key, entry in pairs(session.results) do

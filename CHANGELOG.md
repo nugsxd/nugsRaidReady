@@ -3,6 +3,18 @@
 Bump `## Version:` in `RaidReady.toc` with every change so the in-game
 header reflects the loaded build.
 
+## 0.32.7
+
+- **Fixed: a dropdown could run off the bottom of a smaller screen.** Four of them
+  dropped straight down from their button with no check that there was room below and
+  no clamping, while the lists beside them already handled it. They now open upwards
+  when there is no room, and are clamped as a backstop - clamping alone would slide a
+  list up over the button that opened it, hiding the thing being changed.
+- **The slash command is now `/nrr`.** `/rr` is gone; `/raidready` still works and
+  always did. Renamed for the same reason the addon was: everything in the family
+  starts with an n, and `/rr` was staking a claim on two letters that belong to
+  nobody.
+
 ## 0.32.6
 
 - **Lists have a scroll bar you can grab.** They were wheel-only, which looked clean

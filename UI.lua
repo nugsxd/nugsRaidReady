@@ -537,6 +537,7 @@ end
 local function BuildBrowser(f)
     local fly = CreateFlatFrame(f, C.bg)
     fly:SetSize(250, 320)
+    fly:SetClampedToScreen(true)
     fly:SetFrameStrata("DIALOG")
     fly:Hide()
     fly.rows = {}
@@ -1017,7 +1018,7 @@ function RAA:ShowRaiderView(reqMap, requester)
     dockBeside(f, true)
 end
 
--- Toggle the raider box on demand (e.g. a member typing /rr). Uses the most
+-- Toggle the raider box on demand (e.g. a member typing /nrr). Uses the most
 -- recent check we received; shows an empty state if none has happened yet.
 function RAA:ToggleRaiderView()
     local f = BuildRaiderView()
@@ -1397,13 +1398,13 @@ local function ShowChoiceFlyout(anchor, choices, current, onPick)
     if not choiceFlyout then
         choiceFlyout = CreateFlatFrame(UIParent, C.bg)
         choiceFlyout:SetFrameStrata("FULLSCREEN_DIALOG")
+        choiceFlyout:SetClampedToScreen(true)
         choiceFlyout.rows = {}
         choiceFlyout:Hide()
         AttachPopupBehaviour(choiceFlyout, true)
     end
     local fly = choiceFlyout
     fly:ClearAllPoints()
-    fly:SetPoint("TOPLEFT", anchor, "BOTTOMLEFT", 0, -2)
     fly:SetWidth(math.max(anchor:GetWidth(), 150))
 
     local list = { "(none)" }
@@ -1435,6 +1436,17 @@ local function ShowChoiceFlyout(anchor, choices, current, onPick)
     end
     for i = #list + 1, #fly.rows do fly.rows[i]:Hide() end
     fly:SetHeight(#list * 18 + 8)
+
+    -- Anchored only now: the height comes from the row count, and there is
+    -- nothing to measure against the screen edge before it is known. Drop down
+    -- if there is room, otherwise open upwards - clamping alone would slide the
+    -- list over the button that opened it.
+    local below = (anchor:GetBottom() or 0) - fly:GetHeight()
+    if below < 20 then
+        fly:SetPoint("BOTTOMLEFT", anchor, "TOPLEFT", 0, 2)
+    else
+        fly:SetPoint("TOPLEFT", anchor, "BOTTOMLEFT", 0, -2)
+    end
     fly:Show()
 end
 

@@ -13,7 +13,7 @@ local ADDON_NAME, RAA = ...
 
 --------------------------------------------------------------------------------
 -- Preset data. `high` = 5-star / preferred rank item ID, `low` = 4-star id
--- (optional). IDs are patch 12.0; verify with /rr ids.
+-- (optional). IDs are patch 12.0; verify with /nrr ids.
 --------------------------------------------------------------------------------
 RAA.CONSUMABLES = {
     { category = "Flasks", items = {
@@ -44,7 +44,7 @@ RAA.CONSUMABLES = {
         { name = "Void-Touched Augment Rune", high = 259085 },
     }},
     { category = "Healthstones", items = {
-        { name = "Healthstone", high = 5512 },  -- verify with /rr ids
+        { name = "Healthstone", high = 5512 },  -- verify with /nrr ids
     }},
 }
 
