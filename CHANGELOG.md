@@ -14,6 +14,12 @@ header reflects the loaded build.
 - Fixed: the preferred-setup picker attached itself to whichever frame its button sat
   in. When that was a scrolling pane the list was cut off at the pane edge, because a
   scroll frame clips its children.
+- **Fixed: closing the window with Escape left an open list floating on screen.**
+  Lists hang off the screen itself now rather than off the window, which is what stops
+  a scrolling pane clipping them - and also cut the tie that used to take them down
+  with it. A list now watches the control it was opened from and closes when that goes
+  away, so it cannot outlive its window however the window was closed. Escape closes
+  the list first and the window second, which is the order people expect.
 
 ## 0.32.5
 
