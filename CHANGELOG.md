@@ -3,6 +3,18 @@
 Bump `## Version:` in `RaidReady.toc` with every change so the in-game
 header reflects the loaded build.
 
+## 0.32.6
+
+- **Lists have a scroll bar you can grab.** They were wheel-only, which looked clean
+  and meant a raid-sized list took a while to get through. Drag the thumb, or click
+  the track to page toward the click. The wheel is unchanged.
+- **Flyouts close when you click away from them.** The addon browser and the
+  preferred-setup pickers stayed open until something was selected or the button was
+  pressed again.
+- Fixed: the preferred-setup picker attached itself to whichever frame its button sat
+  in. When that was a scrolling pane the list was cut off at the pane edge, because a
+  scroll frame clips its children.
+
 ## 0.32.5
 
 - Whispers now go through `C_ChatInfo.SendChatMessage` rather than the bare

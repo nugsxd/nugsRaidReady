@@ -149,7 +149,16 @@ local function addAccentBar(header)
     return bar
 end
 
--- Scroll list with no Blizzard scrollbar (mouse-wheel only) for a clean look.
+-- Scroll list with a thin custom bar rather than Blizzard's.
+--
+-- It used to draw no bar at all, on the grounds that it looked cleaner. It did, and
+-- it also left the wheel as the only way through a raid-sized list. The bar is a
+-- frame, not a texture: a texture cannot take mouse input, so a drawn-on indicator
+-- would have been decoration.
+--
+-- BAR_W is the grab area and is wider than the 3px line you can see, because a 3px
+-- target is not something anybody can reliably hit. The whole bar hides when
+-- everything fits, so it never eats a click on a row underneath it.
 local function CreateScrollList(parent, w, h)
     local scroll = CreateFrame("ScrollFrame", nil, parent)
     scroll:SetSize(w, h)
@@ -157,13 +166,149 @@ local function CreateScrollList(parent, w, h)
     content:SetSize(w, h)
     scroll:SetScrollChild(content)
     scroll.content = content
+
+    local BAR_W = 9
+
+    local bar = CreateFrame("Frame", nil, scroll)
+    bar:SetPoint("TOPRIGHT", 0, 0)
+    bar:SetPoint("BOTTOMRIGHT", 0, 0)
+    bar:SetWidth(BAR_W)
+    bar:EnableMouse(true)
+
+    local track = bar:CreateTexture(nil, "ARTWORK")
+    track:SetPoint("TOPRIGHT", 0, 0)
+    track:SetPoint("BOTTOMRIGHT", 0, 0)
+    track:SetWidth(3)
+    track:SetColorTexture(1, 1, 1, 0.05)
+
+    local thumb = CreateFrame("Frame", nil, bar)
+    thumb:SetWidth(BAR_W)
+    thumb:EnableMouse(true)
+    local thumbTex = thumb:CreateTexture(nil, "OVERLAY")
+    thumbTex:SetPoint("TOPRIGHT", 0, 0)
+    thumbTex:SetPoint("BOTTOMRIGHT", 0, 0)
+    thumbTex:SetWidth(3)
+    thumbTex:SetColorTexture(unpack(C.accent))
+
+    local function MaxScroll()
+        return math.max(0, (content:GetHeight() or 1) - (scroll:GetHeight() or 1))
+    end
+
+    local function ScrollTo(value)
+        scroll:SetVerticalScroll(math.max(0, math.min(MaxScroll(), value)))
+        scroll:UpdateBar()
+    end
+
+    function scroll:UpdateBar()
+        local viewH    = self:GetHeight() or 1
+        local totalH   = content:GetHeight() or 1
+        local maxScrol = math.max(0, totalH - viewH)
+        if self:GetVerticalScroll() > maxScrol then self:SetVerticalScroll(maxScrol) end
+        if maxScrol <= 0 then
+            bar:Hide()
+            return
+        end
+        bar:Show()
+        local thumbH = math.max(20, viewH * math.min(1, viewH / totalH))
+        local travel = viewH - thumbH
+        thumb:SetHeight(thumbH)
+        thumb:ClearAllPoints()
+        thumb:SetPoint("TOPRIGHT", bar, "TOPRIGHT", 0,
+                       -((self:GetVerticalScroll() / maxScrol) * travel))
+        self.thumbTravel = travel
+    end
+
+    -- Cursor position comes back at the root scale and has to be divided by the
+    -- frame's effective scale before it can be compared with anything measured off
+    -- the frame. Skipping that makes the drag track the cursor at the wrong speed on
+    -- any UI scale other than 1.
+    local function CursorY()
+        local _, y = GetCursorPosition()
+        return y / (thumb:GetEffectiveScale() or 1)
+    end
+
+    local function OnDrag(self)
+        local travel = scroll.thumbTravel or 0
+        if travel <= 0 then return end
+        ScrollTo(self.grabScroll + (self.grabY - CursorY()) * (MaxScroll() / travel))
+    end
+
+    thumb:SetScript("OnMouseDown", function(self)
+        self.grabY      = CursorY()
+        self.grabScroll = scroll:GetVerticalScroll()
+        thumbTex:SetColorTexture(1, 1, 1, 0.9)
+        self:SetScript("OnUpdate", OnDrag)
+    end)
+    -- OnHide as well as OnMouseUp: releasing outside the frame does not always
+    -- deliver OnMouseUp, and a leftover OnUpdate would drag the list around forever.
+    local function EndDrag(self)
+        self:SetScript("OnUpdate", nil)
+        thumbTex:SetColorTexture(unpack(C.accent))
+    end
+    thumb:SetScript("OnMouseUp", EndDrag)
+    thumb:SetScript("OnHide", EndDrag)
+
+    bar:SetScript("OnMouseDown", function()
+        local top, bot, y = thumb:GetTop(), thumb:GetBottom(), CursorY()
+        if top and bot and y <= top and y >= bot then return end
+        ScrollTo(scroll:GetVerticalScroll()
+                 + ((top and y > top) and -(scroll:GetHeight() or 1) or (scroll:GetHeight() or 1)))
+    end)
+
+    -- Nothing in this addon called an UpdateBar before, because there was no bar.
+    -- Rather than add a call to every loop that fills a list, the bar watches the
+    -- content frame it is describing and updates itself when that resizes.
+    content:SetScript("OnSizeChanged", function() scroll:UpdateBar() end)
+    scroll:SetScript("OnShow", function(self) self:UpdateBar() end)
+
+-- If the content frame is still sitting at zero when the scroll frame gets its
+    -- real size, give it that size. A frame positioned by anchors measures 0 until a
+    -- layout pass has run, so a caller that sized its content from scroll:GetWidth()
+    -- on the very first call built every row zero-wide - which is the "the list is
+    -- empty until I click a second time" bug, and it has now been found three times.
+    --
+    -- Only when it is zero: several callers set a deliberate width, and clobbering
+    -- those would trade this bug for a layout one. Rows are anchored to the content's
+    -- edges, so they take the corrected width with them.
+    scroll:SetScript("OnSizeChanged", function(self)
+        if (self.content:GetWidth() or 0) <= 1 then
+            self.content:SetWidth(self:GetWidth() or 0)
+        end
+        if self.UpdateBar then self:UpdateBar() end
+    end)
+
     scroll:EnableMouseWheel(true)
     scroll:SetScript("OnMouseWheel", function(self, delta)
         local maxScroll = math.max(0, content:GetHeight() - self:GetHeight())
         local newScroll = math.min(maxScroll, math.max(0, self:GetVerticalScroll() - delta * 24))
         self:SetVerticalScroll(newScroll)
+        self:UpdateBar()
     end)
     return scroll
+end
+
+-- Flyouts close when you click away from them.
+--
+-- There is no "clicked anywhere" event, so the only way to see a click that lands
+-- outside a frame is to put something under it that can be clicked. This is a full
+-- screen button, shown and hidden with the flyout. It swallows the click that
+-- dismisses - first click closes, second one acts - which is how every dropdown in
+-- the game behaves, Blizzard's included.
+local function CloseOnOutsideClick(popup)
+    local catcher = CreateFrame("Button", nil, UIParent)
+    catcher:SetAllPoints(UIParent)
+    catcher:RegisterForClicks("AnyUp")
+    catcher:Hide()
+    catcher:SetScript("OnClick", function() popup:Hide() end)
+
+    popup:HookScript("OnShow", function(self)
+        catcher:SetFrameStrata(self:GetFrameStrata())
+        catcher:SetFrameLevel(110)
+        self:SetFrameLevel(120)
+        catcher:Show()
+    end)
+    popup:HookScript("OnHide", function() catcher:Hide() end)
+    return popup
 end
 
 --------------------------------------------------------------------------------
@@ -371,6 +516,7 @@ local function BuildBrowser(f)
 
     search:SetScript("OnTextChanged", function(s) RAA:RefreshBrowser(s:GetText()) end)
     f.browser = fly
+    CloseOnOutsideClick(fly)
     return fly
 end
 
@@ -1215,9 +1361,9 @@ local function ShowChoiceFlyout(anchor, choices, current, onPick)
         choiceFlyout:SetFrameStrata("FULLSCREEN_DIALOG")
         choiceFlyout.rows = {}
         choiceFlyout:Hide()
+        CloseOnOutsideClick(choiceFlyout)
     end
     local fly = choiceFlyout
-    fly:SetParent(anchor:GetParent())
     fly:ClearAllPoints()
     fly:SetPoint("TOPLEFT", anchor, "BOTTOMLEFT", 0, -2)
     fly:SetWidth(math.max(anchor:GetWidth(), 150))
