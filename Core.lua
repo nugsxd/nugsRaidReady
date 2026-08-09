@@ -11,6 +11,31 @@ local ADDON_NAME, RAA = ...
 RAA.version = C_AddOns and C_AddOns.GetAddOnMetadata(ADDON_NAME, "Version") or "0.1.0"
 
 --------------------------------------------------------------------------------
+-- Secret values
+--
+-- 12.1 widens which unit APIs can hand back a "secret": UnitClass, UnitRace,
+-- UnitSex, UnitGroupRolesAssigned and GetInspectSpecialization all return one
+-- whenever the unit's identity is itself secret, which inside an instance it is.
+--
+-- A secret may be drawn on screen but never measured, compared, concatenated or
+-- used as a table key - and a class token's whole job here is to be a table key,
+-- in RAID_CLASS_COLORS. So anything that could be secret goes through Plain(),
+-- which hands back nil instead. nil means "cannot know right now", and a nil class
+-- draws in the default colour rather than throwing.
+--
+-- Your own identity is never secret, so UnitClass("player") needs no guard. The
+-- raid path is also safe: GetRaidRosterInfo returns the class as plain data and is
+-- not on the list.
+--------------------------------------------------------------------------------
+local issecretvalue = _G.issecretvalue
+
+function RAA.Plain(v)
+    if v == nil then return nil end
+    if issecretvalue and issecretvalue(v) then return nil end
+    return v
+end
+
+--------------------------------------------------------------------------------
 -- API shims
 -- Retail (The War Within, 11.x) moved the AddOn functions into the C_AddOns
 -- namespace. We fall back to the old globals so the file at least loads on
@@ -189,7 +214,9 @@ function RAA:GetRosterMembers()
         for i = 1, GetNumGroupMembers() - 1 do
             local unit = "party" .. i
             local name = GetUnitName(unit, true)
-            if name then add(name, UnitIsConnected(unit), select(2, UnitClass(unit))) end
+            -- Plain: a party member's class is secret from 12.1 whenever their
+            -- identity is, and this value ends up indexing RAID_CLASS_COLORS.
+            if name then add(name, UnitIsConnected(unit), RAA.Plain(select(2, UnitClass(unit)))) end
         end
     else
         add(GetUnitName("player", true) or UnitName("player"), true, select(2, UnitClass("player")))

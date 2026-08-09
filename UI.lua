@@ -45,6 +45,15 @@ local STATUS = {
 --------------------------------------------------------------------------------
 -- Flat-styling helpers
 --------------------------------------------------------------------------------
+-- SetPropagateKeyboardInput is protected during combat, and a blocked call is not a
+-- Lua error: pcall does not contain it, it raises ADDON_ACTION_BLOCKED and taints the
+-- addon for the rest of the session. So it is never called inside a lockdown, and the
+-- next key pressed after combat ends restores propagation on its own.
+local function SafePropagate(frame, value)
+    if InCombatLockdown() then return end
+    frame:SetPropagateKeyboardInput(value)
+end
+
 local function Skin(frame, bg, border)
     frame:SetBackdrop({
         bgFile = WHITE, edgeFile = WHITE, edgeSize = 1,
@@ -312,13 +321,13 @@ local function AttachPopupBehaviour(popup, closeOnOutside)
     -- only for the Escape that is actually being handled, which is what stops the same
     -- press also reaching CloseSpecialWindows and shutting the window.
     popup:EnableKeyboard(true)
-    popup:SetPropagateKeyboardInput(true)
+    SafePropagate(popup, true)
     popup:SetScript("OnKeyDown", function(self, key)
         if key == "ESCAPE" and not InCombatLockdown() then
-            self:SetPropagateKeyboardInput(false)
+            SafePropagate(self, false)
             self:Hide()
         else
-            self:SetPropagateKeyboardInput(true)
+            SafePropagate(self, true)
         end
     end)
 
@@ -343,7 +352,7 @@ local function AttachPopupBehaviour(popup, closeOnOutside)
     end)
     popup:HookScript("OnHide", function(self)
         self:SetScript("OnUpdate", nil)
-        self:SetPropagateKeyboardInput(true)
+        SafePropagate(self, true)
         if catcher then catcher:Hide() end
     end)
     return popup

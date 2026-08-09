@@ -3,6 +3,27 @@
 Bump `## Version:` in `RaidReady.toc` with every change so the in-game
 header reflects the loaded build.
 
+## 0.32.8
+
+- **Fixed: "action blocked" errors during combat.** `SetPropagateKeyboardInput` - used
+  so that Escape closes a dropdown or the placement bar rather than the window behind
+  it - is protected during a fight. Calling it then raises ADDON_ACTION_BLOCKED naming
+  this addon, and unlike a Lua error it cannot be caught: it taints the addon for the
+  rest of the session. 4 call sites now skip themselves in combat.
+- The worst of them was the key handler: it guarded the Escape branch but not the
+  branch every *other* key took, so with a list open in combat any keypress would have
+  thrown it - movement keys included.
+- **Ready for patch 12.1.** The .toc declares `120007, 120100`, so this is current
+  on live and on the 12.1 PTR at once rather than being flagged out of date on one of
+  them. Nothing here uses an API that 12.1 removes, and the unit calls that begin
+  returning secret values in 12.1 are guarded - a release check now enforces both, so
+  it stays true.
+- **Fixed before it bit: the party roster would have thrown in 12.1.** A party
+  member's class becomes a secret value whenever their identity is, and a class token's
+  only job here is to index RAID_CLASS_COLORS - which a secret may not do. It now
+  resolves to nil and the row draws in the default colour. The raid path was never
+  affected: GetRaidRosterInfo hands the class over as plain data.
+
 ## 0.32.7
 
 - **Fixed: a dropdown could run off the bottom of a smaller screen.** Four of them
