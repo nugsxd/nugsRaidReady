@@ -1,8 +1,9 @@
 ## Interface: 120100
 ## Title: nugsRaidReady
+## Category: nugsAddons
 ## Notes: Raid addon, consumable and character readiness checks.|nCreated by nugs.
 ## Author: nugs
-## Version: 0.32.9
+## Version: 0.32.10
 ## IconTexture: Interface\AddOns\nugsRaidReady\icon
 ## X-Author: nugs
 ## X-Copyright: Copyright (c) 2026 nugs. All Rights Reserved.
