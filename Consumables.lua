@@ -52,7 +52,7 @@ RAA.CONSUMABLES = {
 -- Requirements (SavedVariables) — a set of required category names.
 --------------------------------------------------------------------------------
 function RAA:GetRequiredCategories()
-    return RaidReadyDB and RaidReadyDB.requiredCategories or {}
+    return RAA.db and RAA.db.requiredCategories or {}
 end
 
 function RAA:IsCategoryRequired(name)
@@ -60,8 +60,8 @@ function RAA:IsCategoryRequired(name)
 end
 
 function RAA:SetCategoryRequired(name, required)
-    if not RaidReadyDB then return end
-    RaidReadyDB.requiredCategories[name] = required and true or nil
+    if not RAA.db then return end
+    RAA.db.requiredCategories[name] = required and true or nil
 end
 
 -- Ordered list of required category indices (stable for comms/UI).

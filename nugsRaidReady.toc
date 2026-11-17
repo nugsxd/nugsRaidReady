@@ -1,9 +1,9 @@
-## Interface: 120100
+## Interface: 120105, 16001
 ## Title: nugsRaidReady
 ## Category: nugsAddons
 ## Notes: Raid addon, consumable and character readiness checks.|nCreated by nugs.
 ## Author: nugs
-## Version: 0.32.10
+## Version: 0.35.0
 ## IconTexture: Interface\AddOns\nugsRaidReady\icon
 ## X-Author: nugs
 ## X-Copyright: Copyright (c) 2026 nugs. All Rights Reserved.
@@ -14,6 +14,8 @@
 # NOTE: bump the Interface number above to match your current retail patch if the
 # game flags this addon as "out of date". Find it with:  /run print((select(4,GetBuildInfo())))
 
+nugsProfile.lua
+nugsMove.lua
 Core.lua
 Comm.lua
 Consumables.lua

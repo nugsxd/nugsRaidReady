@@ -37,13 +37,13 @@ local function onDragUpdate(btn)
     local px, py = GetCursorPosition()
     px, py = px / scale, py / scale
     local angle = math.deg(math.atan2(py - my, px - mx))
-    RaidReadyDB.minimapAngle = angle
+    RAA.db.minimapAngle = angle
     positionButton(btn, angle)
 end
 
 function RAA:InitMinimap()
     if self.minimapButton then return end
-    RaidReadyDB.minimapAngle = RaidReadyDB.minimapAngle or 200
+    RAA.db.minimapAngle = RAA.db.minimapAngle or 200
 
     local btn = CreateFrame("Button", "RaidReadyMinimapButton", Minimap)
     btn:SetFrameStrata("MEDIUM")
@@ -95,8 +95,8 @@ function RAA:InitMinimap()
     btn:SetScript("OnLeave", function() GameTooltip:Hide() end)
 
     self.minimapButton = btn
-    positionButton(btn, RaidReadyDB.minimapAngle)
-    self:SetMinimapShown(not RaidReadyDB.minimapHidden)
+    positionButton(btn, RAA.db.minimapAngle)
+    self:SetMinimapShown(not RAA.db.minimapHidden)
 end
 
 function RAA:SetMinimapShown(shown)

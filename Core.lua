@@ -115,23 +115,23 @@ end
 
 --------------------------------------------------------------------------------
 -- Requirements (SavedVariables)
--- RaidReadyDB.required = { ["DBM-Core"] = "0", ["WeakAuras"] = "5.19" }
+-- RAA.db.required = { ["DBM-Core"] = "0", ["WeakAuras"] = "5.19" }
 -- A min version of "" or "0" means "any installed version is fine".
 --------------------------------------------------------------------------------
 
 function RAA:GetRequirements()
-    return RaidReadyDB and RaidReadyDB.required or {}
+    return RAA.db and RAA.db.required or {}
 end
 
 function RAA:AddRequirement(folderName, minVersion)
     folderName = folderName and folderName:gsub("^%s+", ""):gsub("%s+$", "")
     if not folderName or folderName == "" then return false end
-    RaidReadyDB.required[folderName] = (minVersion and minVersion:gsub("%s+", "")) or ""
+    RAA.db.required[folderName] = (minVersion and minVersion:gsub("%s+", "")) or ""
     return true
 end
 
 function RAA:RemoveRequirement(folderName)
-    RaidReadyDB.required[folderName] = nil
+    RAA.db.required[folderName] = nil
 end
 
 -- Ordered list of required folder names (for stable UI + comms).
@@ -363,11 +363,19 @@ function RAA:GetCharacterInfo()
         info.ilvlEquipped, info.ilvlOverall = "?", "?"
     end
 
-    -- Specialization
-    local specIndex = GetSpecialization and GetSpecialization()
+    -- Specialization.
+    --
+    -- Namespaced first: WoW Forever has removed the deprecated globals, and without
+    -- this every raider's spec reported as "None" rather than as an error.
+    local SpecIndex = (C_SpecializationInfo and C_SpecializationInfo.GetSpecialization)
+                      or _G.GetSpecialization
+    local SpecInfo  = (C_SpecializationInfo and C_SpecializationInfo.GetSpecializationInfo)
+                      or _G.GetSpecializationInfo
+
+    local specIndex = SpecIndex and SpecIndex()
     local specID, specName
-    if specIndex and GetSpecializationInfo then
-        specID, specName = GetSpecializationInfo(specIndex)
+    if specIndex and SpecInfo then
+        specID, specName = SpecInfo(specIndex)
     end
     info.spec = specName or "None"
 
@@ -514,6 +522,7 @@ end
 
 function RAA:GetReadiness(info)
     local parts, earned, total = {}, 0, 0
+    ---@param score number? nil means "cannot be measured" - see the guard below
     local function add(label, weight, score, note)
         if score == nil then                       -- unavailable: don't penalize
             parts[#parts + 1] = { label = label, note = note }
@@ -627,7 +636,7 @@ function RAA:GetReadiness(info)
 
     -- Gold: nothing below 5000g, ramping to full at 25000g. Optional - it's more
     -- about repair convenience than raid readiness, so it can be toggled off.
-    if info.goldCopper and RaidReadyDB and RaidReadyDB.scoreGold then
+    if info.goldCopper and RAA.db and RAA.db.scoreGold then
         local g = info.goldCopper
         local score = (g < GOLD_FLOOR) and 0 or ((g - GOLD_FLOOR) / (GOLD_FULL - GOLD_FLOOR))
         add("Gold", 25, score, math.floor(g / 10000) .. "g")
@@ -648,15 +657,15 @@ function RAA:GroupContext()
 end
 
 function RAA:GetPreferred(context)
-    local p = RaidReadyDB and RaidReadyDB.preferred
+    local p = RAA.db and RAA.db.preferred
     if not (p and context) then return nil end
     return p[context]
 end
 
 function RAA:SetPreferred(context, key, value)
-    if not (RaidReadyDB and RaidReadyDB.preferred and context) then return end
-    RaidReadyDB.preferred[context] = RaidReadyDB.preferred[context] or {}
-    RaidReadyDB.preferred[context][key] = value   -- nil clears
+    if not (RAA.db and RAA.db.preferred and context) then return end
+    RAA.db.preferred[context] = RAA.db.preferred[context] or {}
+    RAA.db.preferred[context][key] = value   -- nil clears
 end
 
 -- Names of the character's equipment-manager sets.
@@ -804,10 +813,12 @@ local function RegisterWithSuite()
             if RAA:CanLeadCheck() then RAA:ToggleUI() else RAA:ToggleRaiderView() end
         end,
         SetMinimap = function(shown)
-            RaidReadyDB.minimapHidden = not shown
+            RAA.db.minimapHidden = not shown
             RAA:SetMinimapShown(shown)
         end,
-        GetDB      = function() return RaidReadyDB, SUITE_DEFAULTS end,
+        -- This character's settings, not the account container.
+        GetDB      = function() return RAA.db, SUITE_DEFAULTS end,
+        Profile    = RAA.Profile,
         -- Gold tracking is a first-launch prompt, not a preference. Importing
         -- somebody else's answer would silently skip the question.
         exclude    = { introDone = true, scoreGold = true, minimapAngle = true },
@@ -824,37 +835,37 @@ boot:RegisterEvent("GROUP_ROSTER_UPDATE")
 boot:RegisterEvent("PARTY_LEADER_CHANGED")
 boot:SetScript("OnEvent", function(_, event, arg1)
     if event == "ADDON_LOADED" and arg1 == ADDON_NAME then
-        RaidReadyDB = RaidReadyDB or {}
-        RaidReadyDB.required = RaidReadyDB.required or {}
-        RaidReadyDB.requiredCategories = RaidReadyDB.requiredCategories or {}
-        if RaidReadyDB.autoWhisper == nil then RaidReadyDB.autoWhisper = false end
-        if RaidReadyDB.minimapHidden == nil then RaidReadyDB.minimapHidden = false end
-        RaidReadyDB.minimapAngle = RaidReadyDB.minimapAngle or 200
-        RaidReadyDB.uiScale = RaidReadyDB.uiScale or 1
-        -- standalone readiness bar
-        if RaidReadyDB.barShown == nil then RaidReadyDB.barShown = true end
-        if RaidReadyDB.barLocked == nil then RaidReadyDB.barLocked = false end
-        RaidReadyDB.barPos = RaidReadyDB.barPos or { point = "CENTER", x = 0, y = -220 }
-        -- ready-check warnings
-        RaidReadyDB.rcThreshold = RaidReadyDB.rcThreshold or 700
-        if RaidReadyDB.rcPopup == nil then RaidReadyDB.rcPopup = true end
-        if RaidReadyDB.rcWhisper == nil then RaidReadyDB.rcWhisper = false end
-        -- Gold tracking is opt-in via a first-launch prompt; leaving it nil means
-        -- "not yet asked" (and, until answered, not counted). Anyone who already
-        -- has a value chose before, so don't re-prompt them.
-        if RaidReadyDB.scoreGold ~= nil then RaidReadyDB.introDone = true end
-        RaidReadyDB.preferred = RaidReadyDB.preferred or {}
-        RaidReadyDB.preferred.dungeon = RaidReadyDB.preferred.dungeon or {}
-        RaidReadyDB.preferred.raid    = RaidReadyDB.preferred.raid    or {}
+        -- Settings are per character. See nugsProfile.lua for why nothing is linked.
+        --
+        -- The long hand-rolled defaults block that used to live here is gone:
+        -- SUITE_DEFAULTS already described every one of those keys and the two were
+        -- being kept in step by hand, which is a duplicate waiting to disagree.
+        RAA.db = RAA.Profile:Init({
+            global   = "RaidReadyDB",
+            defaults = SUITE_DEFAULTS,
+            -- Gold tracking is opt-in via a first-launch prompt, so nil means "not
+            -- yet asked" and no default can express that. Named here so it travels
+            -- with the rest instead of being stranded on the account table.
+            carry    = { "scoreGold", "introDone" },
+            migrate  = function(stored)
+                -- Anyone who already has a value chose before, so do not re-prompt.
+                if stored.scoreGold ~= nil then stored.introDone = true end
+            end,
+            onApply  = function()
+                if RAA.RefreshOptions then RAA:RefreshOptions() end
+                if RAA.SetScoreBarShown then RAA:SetScoreBarShown(RAA.db.barShown) end
+            end,
+        })
         RegisterWithSuite()
     elseif event == "PLAYER_LOGIN" then
+        RAA.Profile:Attach()
         RAA:BuildInstalledMap()
         if RAA.InitComm then RAA:InitComm() end
         if RAA.InitConsumableComm then RAA:InitConsumableComm() end
         if RAA.InitMinimap then RAA:InitMinimap() end
-        if RAA.SetScoreBarShown then RAA:SetScoreBarShown(RaidReadyDB.barShown) end
+        if RAA.SetScoreBarShown then RAA:SetScoreBarShown(RAA.db.barShown) end
         if RAA.InitReadinessEvents then RAA:InitReadinessEvents() end
-        if not RaidReadyDB.introDone and RAA.ShowGoldOptIn then
+        if not RAA.db.introDone and RAA.ShowGoldOptIn then
             C_Timer.After(1, function() RAA:ShowGoldOptIn() end)
         end
         RAA:UpdateLeaderState()

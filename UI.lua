@@ -637,7 +637,7 @@ local function BuildUI()
     f:SetFrameStrata("HIGH")
     Skin(f, C.bg)
     table.insert(UISpecialFrames, "RaidReadyFrame")  -- ESC closes
-    f:SetScale((RaidReadyDB and RaidReadyDB.uiScale) or 1)
+    f:SetScale((RAA.db and RAA.db.uiScale) or 1)
 
     -- Header bar (drag handle)
     local header = CreateFlatFrame(f, C.header)
@@ -646,8 +646,20 @@ local function BuildUI()
     header:SetHeight(30)
     header:EnableMouse(true)
     header:RegisterForDrag("LeftButton")
-    header:SetScript("OnDragStart", function() f:StartMoving() end)
-    header:SetScript("OnDragStop", function() f:StopMovingOrSizing(); f.userMoved = true; f:SetClampedToScreen(true) end)
+    -- Dragging, and the guarantee that a move ends: from the shared nugsMove.lua,
+    -- which asserts that a frame nobody is holding is not moving rather than closing
+    -- one more route by which a move could be left running. Read the note at the top
+    -- of that file before changing anything here.
+    RAA.InstallMove(f, {
+        label = "this window", handle = header, body = true,
+        -- Runs however the move ended, including when the invariant ended it because
+        -- the mouse-up never arrived - so a window moved by hand still counts as
+        -- moved by hand and stops being repositioned for you.
+        onEnd = function(self)
+            self.userMoved = true
+            self:SetClampedToScreen(true)
+        end,
+    })
 
     -- accent underline
     addAccentBar(header)
@@ -773,9 +785,9 @@ local function BuildUI()
     -- Auto-whisper toggle
     local whisperCheck = CreateFlatCheck(f, "Whisper players to update or install")
     whisperCheck:SetPoint("TOPLEFT", checkBtn, "BOTTOMLEFT", 2, -10)
-    whisperCheck:SetChecked(RaidReadyDB and RaidReadyDB.autoWhisper)
+    whisperCheck:SetChecked(RAA.db and RAA.db.autoWhisper)
     whisperCheck.onToggle = function(checked)
-        if RaidReadyDB then RaidReadyDB.autoWhisper = checked end
+        if RAA.db then RAA.db.autoWhisper = checked end
     end
     f.whisperCheck = whisperCheck
 
@@ -922,7 +934,7 @@ local function BuildRaiderView()
     f:SetFrameStrata("HIGH")
     Skin(f, C.bg)
     table.insert(UISpecialFrames, "RaidReadyRaiderFrame")  -- ESC closes
-    f:SetScale((RaidReadyDB and RaidReadyDB.uiScale) or 1)
+    f:SetScale((RAA.db and RAA.db.uiScale) or 1)
     -- Closing forgets a manual drag, so reopening re-docks beside the main window.
     f:SetScript("OnHide", function(s) s.userMoved = nil end)
 
@@ -932,8 +944,20 @@ local function BuildRaiderView()
     header:SetHeight(28)
     header:EnableMouse(true)
     header:RegisterForDrag("LeftButton")
-    header:SetScript("OnDragStart", function() f:StartMoving() end)
-    header:SetScript("OnDragStop", function() f:StopMovingOrSizing(); f.userMoved = true; f:SetClampedToScreen(true) end)
+    -- Dragging, and the guarantee that a move ends: from the shared nugsMove.lua,
+    -- which asserts that a frame nobody is holding is not moving rather than closing
+    -- one more route by which a move could be left running. Read the note at the top
+    -- of that file before changing anything here.
+    RAA.InstallMove(f, {
+        label = "this window", handle = header, body = true,
+        -- Runs however the move ended, including when the invariant ended it because
+        -- the mouse-up never arrived - so a window moved by hand still counts as
+        -- moved by hand and stops being repositioned for you.
+        onEnd = function(self)
+            self.userMoved = true
+            self:SetClampedToScreen(true)
+        end,
+    })
 
     addAccentBar(header)
 
@@ -1069,8 +1093,20 @@ local function addSkinnedHeader(f, titleText, tabActiveKey, onSwitch)
     header:SetHeight(30)
     header:EnableMouse(true)
     header:RegisterForDrag("LeftButton")
-    header:SetScript("OnDragStart", function() f:StartMoving() end)
-    header:SetScript("OnDragStop", function() f:StopMovingOrSizing(); f.userMoved = true; f:SetClampedToScreen(true) end)
+    -- Dragging, and the guarantee that a move ends: from the shared nugsMove.lua,
+    -- which asserts that a frame nobody is holding is not moving rather than closing
+    -- one more route by which a move could be left running. Read the note at the top
+    -- of that file before changing anything here.
+    RAA.InstallMove(f, {
+        label = "this window", handle = header, body = true,
+        -- Runs however the move ended, including when the invariant ended it because
+        -- the mouse-up never arrived - so a window moved by hand still counts as
+        -- moved by hand and stops being repositioned for you.
+        onEnd = function(self)
+            self.userMoved = true
+            self:SetClampedToScreen(true)
+        end,
+    })
     addAccentBar(header)
     local icon = header:CreateTexture(nil, "OVERLAY")
     icon:SetSize(18, 18); icon:SetPoint("LEFT", 10, 0)
@@ -1092,7 +1128,7 @@ local function BuildConsumeUI()
     f:SetMovable(true); f:SetClampedToScreen(true); f:SetFrameStrata("HIGH")
     Skin(f, C.bg)
     table.insert(UISpecialFrames, "RaidReadyConsumeFrame")
-    f:SetScale((RaidReadyDB and RaidReadyDB.uiScale) or 1)
+    f:SetScale((RAA.db and RAA.db.uiScale) or 1)
     addSkinnedHeader(f, "RaidReady", "consumables", function(k) RAA:SwitchLeaderTab(k) end)
 
     local cfgHeader = f:CreateFontString(nil, "OVERLAY", "GameFontNormal")
@@ -1239,7 +1275,7 @@ local function BuildRaiderConsume()
     f:SetMovable(true); f:SetClampedToScreen(true); f:SetFrameStrata("HIGH")
     Skin(f, C.bg)
     table.insert(UISpecialFrames, "RaidReadyRaiderConsumeFrame")
-    f:SetScale((RaidReadyDB and RaidReadyDB.uiScale) or 1)
+    f:SetScale((RAA.db and RAA.db.uiScale) or 1)
     -- Closing forgets a manual drag, so reopening re-docks beside the main window.
     f:SetScript("OnHide", function(s) s.userMoved = nil end)
     addSkinnedHeader(f, "Consumables", "consumables", function(k) RAA:SwitchRaiderTab(k) end)
@@ -1468,7 +1504,7 @@ local function BuildInfoUI()
     f:SetMovable(true); f:SetClampedToScreen(true); f:SetFrameStrata("HIGH")
     Skin(f, C.bg)
     table.insert(UISpecialFrames, "RaidReadyInfoFrame")
-    f:SetScale((RaidReadyDB and RaidReadyDB.uiScale) or 1)
+    f:SetScale((RAA.db and RAA.db.uiScale) or 1)
     -- routes back to whichever side opened it
     addSkinnedHeader(f, "RaidReady", "info", function(k)
         if RAA.infoSide == "raider" then RAA:SwitchRaiderTab(k) else RAA:SwitchLeaderTab(k) end
@@ -1630,7 +1666,7 @@ function RAA:RefreshInfo(info)
     end
 
     -- Gold row + its section hidden entirely when gold tracking is off.
-    local showGold = RaidReadyDB and RaidReadyDB.scoreGold
+    local showGold = RAA.db and RAA.db.scoreGold
     if f.infoLabels.gold then f.infoLabels.gold:SetShown(showGold) end
     if f.infoValues.gold then f.infoValues.gold:SetShown(showGold) end
     if f.secHeaders.Resources then f.secHeaders.Resources:SetShown(showGold) end
@@ -1827,13 +1863,13 @@ local function BuildScoreBar()
 
     local f = CreateFrame("Button", "RaidReadyScoreBar", UIParent, "BackdropTemplate")
     f:SetSize(180, 26)
-    local p = (RaidReadyDB and RaidReadyDB.barPos) or {}
+    local p = (RAA.db and RAA.db.barPos) or {}
     f:SetPoint(p.point or "CENTER", UIParent, p.point or "CENTER", p.x or 0, p.y or -220)
     f:SetClampedToScreen(true)
     f:SetMovable(true)
     f:SetFrameStrata("MEDIUM")
     Skin(f, C.bg)
-    f:SetScale((RaidReadyDB and RaidReadyDB.uiScale) or 1)
+    f:SetScale((RAA.db and RAA.db.uiScale) or 1)
 
     local fill = f:CreateTexture(nil, "ARTWORK")
     fill:SetTexture(WHITE)
@@ -1856,16 +1892,22 @@ local function BuildScoreBar()
     score:SetPoint("RIGHT", -8, 0)
     f.scoreText = score
 
-    f:RegisterForDrag("LeftButton")
-    f:SetScript("OnDragStart", function(s)
-        if RaidReadyDB and RaidReadyDB.barLocked then return end
-        s:StartMoving()
-    end)
-    f:SetScript("OnDragStop", function(s)
-        s:StopMovingOrSizing()
-        local point, _, _, x, y = s:GetPoint(1)
-        if RaidReadyDB then RaidReadyDB.barPos = { point = point, x = x, y = y } end
-    end)
+    -- Dragging, from the shared nugsMove.lua. Read the note at the top of that file:
+    -- it asserts that a frame nobody is holding is not moving, rather than closing one
+    -- more route by which a move could be left running.
+    RAA.InstallMove(f, {
+        label = "the readiness bar",
+        -- This is a Button and takes the mouse on its own; it is also clickable while
+        -- locked, so the mouse must not follow the lock state here.
+        mouse   = false,
+        canMove = function() return not (RAA.db and RAA.db.barLocked) end,
+        -- Runs however the move ended, including when the invariant ended it because
+        -- the mouse-up never arrived.
+        onEnd   = function(s)
+            local point, _, _, x, y = s:GetPoint(1)
+            if RAA.db then RAA.db.barPos = { point = point, x = x, y = y } end
+        end,
+    })
     f:SetScript("OnClick", function()
         RAA:ShowInfo(RAA:CanLeadCheck() and "leader" or "raider")
     end)
@@ -1989,13 +2031,16 @@ local function BuildRCWarning()
     f:SetMovable(true); f:SetClampedToScreen(true); f:SetFrameStrata("DIALOG")
     Skin(f, C.bg)
     table.insert(UISpecialFrames, "RaidReadyWarningFrame")
-    f:SetScale((RaidReadyDB and RaidReadyDB.uiScale) or 1)
+    f:SetScale((RAA.db and RAA.db.uiScale) or 1)
 
     local header = CreateFlatFrame(f, C.header)
     header:SetPoint("TOPLEFT", 1, -1); header:SetPoint("TOPRIGHT", -1, -1); header:SetHeight(28)
     header:EnableMouse(true); header:RegisterForDrag("LeftButton")
-    header:SetScript("OnDragStart", function() f:StartMoving() end)
-    header:SetScript("OnDragStop", function() f:StopMovingOrSizing() end)
+    -- Dragging, and the guarantee that a move ends: from the shared nugsMove.lua,
+    -- which asserts that a frame nobody is holding is not moving rather than closing
+    -- one more route by which a move could be left running. Read the note at the top
+    -- of that file before changing anything here.
+    RAA.InstallMove(f, { label = "this window", handle = header, body = true })
     addAccentBar(header)
     local title = header:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     title:SetPoint("LEFT", 12, 0)
@@ -2074,14 +2119,26 @@ local function BuildReadinessRoster()
     f:SetMovable(true); f:SetClampedToScreen(true); f:SetFrameStrata("HIGH")
     Skin(f, C.bg)
     table.insert(UISpecialFrames, "RaidReadyReadinessFrame")
-    f:SetScale((RaidReadyDB and RaidReadyDB.uiScale) or 1)
+    f:SetScale((RAA.db and RAA.db.uiScale) or 1)
     f:SetScript("OnHide", function(s) s.userMoved = nil end)
 
     local header = CreateFlatFrame(f, C.header)
     header:SetPoint("TOPLEFT", 1, -1); header:SetPoint("TOPRIGHT", -1, -1); header:SetHeight(28)
     header:EnableMouse(true); header:RegisterForDrag("LeftButton")
-    header:SetScript("OnDragStart", function() f:StartMoving() end)
-    header:SetScript("OnDragStop", function() f:StopMovingOrSizing(); f.userMoved = true; f:SetClampedToScreen(true) end)
+    -- Dragging, and the guarantee that a move ends: from the shared nugsMove.lua,
+    -- which asserts that a frame nobody is holding is not moving rather than closing
+    -- one more route by which a move could be left running. Read the note at the top
+    -- of that file before changing anything here.
+    RAA.InstallMove(f, {
+        label = "this window", handle = header, body = true,
+        -- Runs however the move ended, including when the invariant ended it because
+        -- the mouse-up never arrived - so a window moved by hand still counts as
+        -- moved by hand and stops being repositioned for you.
+        onEnd = function(self)
+            self.userMoved = true
+            self:SetClampedToScreen(true)
+        end,
+    })
     addAccentBar(header)
     local title = header:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     title:SetPoint("LEFT", 12, 0); title:SetText("Raid Readiness"); title:SetTextColor(unpack(C.gold))
@@ -2163,7 +2220,7 @@ local GOLD_BLURB = "RaidReady reads your gold |cffffffffonly|r to factor a repai
     .. "with anyone."
 
 local function applyGoldSetting(on)
-    if RaidReadyDB then RaidReadyDB.scoreGold = on end
+    if RAA.db then RAA.db.scoreGold = on end
     if RAA.settingsFrame and RAA.settingsFrame.goldCheck then
         RAA.settingsFrame.goldCheck:SetChecked(on)
     end
@@ -2174,8 +2231,8 @@ end
 StaticPopupDialogs["RAIDREADY_GOLD_OPTIN"] = {
     text = "Track gold toward your RaidReady readiness score?\n\n" .. GOLD_BLURB,
     button1 = YES, button2 = NO,
-    OnAccept = function() applyGoldSetting(true);  if RaidReadyDB then RaidReadyDB.introDone = true end end,
-    OnCancel = function() applyGoldSetting(false); if RaidReadyDB then RaidReadyDB.introDone = true end end,
+    OnAccept = function() applyGoldSetting(true);  if RAA.db then RAA.db.introDone = true end end,
+    OnCancel = function() applyGoldSetting(false); if RAA.db then RAA.db.introDone = true end end,
     timeout = 0, whileDead = true, hideOnEscape = false, preferredIndex = 3,
 }
 
@@ -2204,7 +2261,7 @@ local function BuildSettings()
     f:SetFrameStrata("DIALOG")
     Skin(f, C.bg)
     table.insert(UISpecialFrames, "RaidReadySettingsFrame")
-    f:SetScale((RaidReadyDB and RaidReadyDB.uiScale) or 1)
+    f:SetScale((RAA.db and RAA.db.uiScale) or 1)
     -- Closing forgets a manual drag, so reopening re-docks beside the main window.
     f:SetScript("OnHide", function(s) s.userMoved = nil end)
 
@@ -2212,8 +2269,20 @@ local function BuildSettings()
     local header = CreateFlatFrame(f, C.header)
     header:SetPoint("TOPLEFT", 1, -1); header:SetPoint("TOPRIGHT", -1, -1); header:SetHeight(30)
     header:EnableMouse(true); header:RegisterForDrag("LeftButton")
-    header:SetScript("OnDragStart", function() f:StartMoving() end)
-    header:SetScript("OnDragStop", function() f:StopMovingOrSizing(); f.userMoved = true; f:SetClampedToScreen(true) end)
+    -- Dragging, and the guarantee that a move ends: from the shared nugsMove.lua,
+    -- which asserts that a frame nobody is holding is not moving rather than closing
+    -- one more route by which a move could be left running. Read the note at the top
+    -- of that file before changing anything here.
+    RAA.InstallMove(f, {
+        label = "this window", handle = header, body = true,
+        -- Runs however the move ended, including when the invariant ended it because
+        -- the mouse-up never arrived - so a window moved by hand still counts as
+        -- moved by hand and stops being repositioned for you.
+        onEnd = function(self)
+            self.userMoved = true
+            self:SetClampedToScreen(true)
+        end,
+    })
     addAccentBar(header)
     local hicon = header:CreateTexture(nil, "OVERLAY")
     hicon:SetSize(18, 18); hicon:SetPoint("LEFT", 10, 0)
@@ -2230,7 +2299,7 @@ local function BuildSettings()
     local mm = CreateFlatCheck(f, "Show minimap button")
     mm:SetPoint("TOPLEFT", 20, -66)
     mm.onToggle = function(checked)
-        if RaidReadyDB then RaidReadyDB.minimapHidden = not checked end
+        if RAA.db then RAA.db.minimapHidden = not checked end
         if RAA.SetMinimapShown then RAA:SetMinimapShown(checked) end
     end
     f.minimapCheck = mm
@@ -2248,7 +2317,7 @@ local function BuildSettings()
     _G["RaidReadyScaleSliderHigh"]:SetText("200%")
     sl:SetScript("OnValueChanged", function(_, v)
         v = math.floor(v * 20 + 0.5) / 20
-        if RaidReadyDB then RaidReadyDB.uiScale = v end
+        if RAA.db then RAA.db.uiScale = v end
         _G["RaidReadyScaleSliderText"]:SetText(string.format("%d%%", math.floor(v * 100 + 0.5)))
         RAA:ApplyScale()
     end)
@@ -2262,7 +2331,7 @@ local function BuildSettings()
     local barShow = CreateFlatCheck(f, "Show readiness bar")
     barShow:SetPoint("TOPLEFT", 20, -172)
     barShow.onToggle = function(checked)
-        if RaidReadyDB then RaidReadyDB.barShown = checked end
+        if RAA.db then RAA.db.barShown = checked end
         if RAA.SetScoreBarShown then RAA:SetScoreBarShown(checked) end
     end
     f.barShow = barShow
@@ -2270,7 +2339,7 @@ local function BuildSettings()
     local barLock = CreateFlatCheck(f, "Lock bar position")
     barLock:SetPoint("TOPLEFT", 20, -194)
     barLock.onToggle = function(checked)
-        if RaidReadyDB then RaidReadyDB.barLocked = checked end
+        if RAA.db then RAA.db.barLocked = checked end
     end
     f.barLock = barLock
 
@@ -2288,21 +2357,21 @@ local function BuildSettings()
     rcBox:SetNumeric(true)
     rcBox:SetScript("OnTextChanged", function(s)
         local v = tonumber(s:GetText())
-        if v and v >= 0 and RaidReadyDB then RaidReadyDB.rcThreshold = v end
+        if v and v >= 0 and RAA.db then RAA.db.rcThreshold = v end
     end)
     f.rcBox = rcBox
 
     local rcPopup = CreateFlatCheck(f, "Warn me if I'm below it")
     rcPopup:SetPoint("TOPLEFT", 20, -270)
     rcPopup.onToggle = function(checked)
-        if RaidReadyDB then RaidReadyDB.rcPopup = checked end
+        if RAA.db then RAA.db.rcPopup = checked end
     end
     f.rcPopup = rcPopup
 
     local rcWhisper = CreateFlatCheck(f, "Whisper raiders below it (leader)")
     rcWhisper:SetPoint("TOPLEFT", 20, -292)
     rcWhisper.onToggle = function(checked)
-        if RaidReadyDB then RaidReadyDB.rcWhisper = checked end
+        if RAA.db then RAA.db.rcWhisper = checked end
     end
     f.rcWhisper = rcWhisper
 
@@ -2364,14 +2433,14 @@ end
 function RAA:ToggleSettings()
     local f = BuildSettings()
     if f:IsShown() then f:Hide(); return end
-    f.minimapCheck:SetChecked(not (RaidReadyDB and RaidReadyDB.minimapHidden))
-    f.barShow:SetChecked(RaidReadyDB and RaidReadyDB.barShown)
-    f.barLock:SetChecked(RaidReadyDB and RaidReadyDB.barLocked)
-    f.rcBox:SetText(tostring((RaidReadyDB and RaidReadyDB.rcThreshold) or 700))
-    f.rcPopup:SetChecked(RaidReadyDB and RaidReadyDB.rcPopup)
-    f.rcWhisper:SetChecked(RaidReadyDB and RaidReadyDB.rcWhisper)
-    f.goldCheck:SetChecked(RaidReadyDB and RaidReadyDB.scoreGold)
-    local scale = (RaidReadyDB and RaidReadyDB.uiScale) or 1
+    f.minimapCheck:SetChecked(not (RAA.db and RAA.db.minimapHidden))
+    f.barShow:SetChecked(RAA.db and RAA.db.barShown)
+    f.barLock:SetChecked(RAA.db and RAA.db.barLocked)
+    f.rcBox:SetText(tostring((RAA.db and RAA.db.rcThreshold) or 700))
+    f.rcPopup:SetChecked(RAA.db and RAA.db.rcPopup)
+    f.rcWhisper:SetChecked(RAA.db and RAA.db.rcWhisper)
+    f.goldCheck:SetChecked(RAA.db and RAA.db.scoreGold)
+    local scale = (RAA.db and RAA.db.uiScale) or 1
     f.scaleSlider:SetValue(scale)
     _G["RaidReadyScaleSliderText"]:SetText(string.format("%d%%", math.floor(scale * 100 + 0.5)))
     -- Match the other windows. Applied on open rather than live, so dragging the
@@ -2383,7 +2452,7 @@ end
 
 -- Apply the saved UI scale to all RaidReady windows (not the settings panel).
 function RAA:ApplyScale()
-    local s = (RaidReadyDB and RaidReadyDB.uiScale) or 1
+    local s = (RAA.db and RAA.db.uiScale) or 1
     -- numeric loop: some frames may be nil, which would stop ipairs early
     local frames = { self.frame, self.consumeFrame, self.raiderFrame, self.raiderConsumeFrame,
                      self.infoFrame, self.scoreBar, self.rcFrame, self.readinessFrame }

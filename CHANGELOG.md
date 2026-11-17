@@ -1,5 +1,61 @@
 # Changelog
 
+## 0.35.0
+
+- **Runs on WoW Forever.** The addon now declares both 12.1.5 and 1.60.1, so one build
+  works on retail and on Forever.
+
+  Forever turned out to be the modern engine wearing a 1.x version number — 271 `C_`
+  namespaces, secret values, duration objects, all of it. What it does *not* have is
+  the deprecated globals retail still ships as shims, and this addon was already
+  written against the namespaced forms.
+- **Specs report correctly on WoW Forever.** The spec lookup used the deprecated
+  global behind a guard, so on a client that has removed it every raider showed as
+  spec "None" rather than as an error. It uses `C_SpecializationInfo` now.
+
+
+## 0.34.1
+
+- **Updated for patch 12.1.5.** No behaviour changes — this marks the addon as current
+  so the client stops reporting it out of date.
+
+
+## 0.34.0
+
+- **Every movable window in this addon now uses one shared drag installer.**
+
+  "The window sticks to the cursor" / "the window jumps when I grab the title bar"
+  has been fixed four times across this family and come back every time. Each fix
+  named a *path* by which a move could be left running - hidden mid-drag, a guard
+  thrown away by a later `SetScript`, a click swallowed by a dropdown - closed that
+  one path, and lived in its own handler, leaving every other frame untouched.
+
+  The shared installer names no path. It asserts the thing that is true whatever the
+  path was: **a frame nobody is holding must not be moving**, re-checked every frame.
+  Anything that survives - known or unknown - is over on the next one. Starting a move
+  also stops any previous one first, because `StartMoving` on an already-moving frame
+  re-bases the move onto the cursor, which is exactly what the jump looked like.
+
+- **And it measures.** If a frame ever moves by an amount the cursor did not ask for,
+  it now says so in chat with the numbers - how far, what it was anchored to, whether
+  a move was already running, and what was under the cursor. Silent otherwise.
+
+
+## 0.33.0
+
+- **Settings are per character now.** A tweak on one character no longer changes
+  another. Not shared profiles - nothing is linked at all: a character's settings are
+  seeded once, from the starting point or another character, and are its own from then
+  on. Copying is something you do, not something you leave switched on.
+  - On your first login after this, the settings you have become this character's AND
+    the starting point every other character seeds from, so nobody arrives to an empty
+    screen.
+  - Copy between characters from nugsSuite's Characters tab, which drives every nugs
+    addon at once.
+- Profile strings now carry this character's settings rather than the account table.
+  Left as it was, exporting would have put every character you own into a string meant
+  to describe one of them.
+
 ## 0.32.10
 
 - Grouped under a **nugsAddons** category in the game's AddOns list, so the whole

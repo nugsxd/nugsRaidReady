@@ -131,9 +131,9 @@ function RAA:OnReadyCheck()
     local info = self:GetCharacterInfo()
     local score = info.readiness
     if not score then return end
-    local threshold = (RaidReadyDB and RaidReadyDB.rcThreshold) or 700
+    local threshold = (RAA.db and RAA.db.rcThreshold) or 700
 
-    if RaidReadyDB and RaidReadyDB.rcPopup and score < threshold and self.ShowReadyCheckWarning then
+    if RAA.db and RAA.db.rcPopup and score < threshold and self.ShowReadyCheckWarning then
         self:ShowReadyCheckWarning(score, threshold, info.readinessParts)
     end
 
@@ -146,9 +146,9 @@ end
 -- Leader side: whisper anyone who reported below the threshold.
 function RAA:OnScoreReport(sender, score)
     if not score then return end
-    if not (RaidReadyDB and RaidReadyDB.rcWhisper) then return end
+    if not (RAA.db and RAA.db.rcWhisper) then return end
     if not self:CanLeadCheck() then return end
-    local threshold = RaidReadyDB.rcThreshold or 700
+    local threshold = RAA.db.rcThreshold or 700
     if score >= threshold then return end
 
     local key = RAA.NameKey(sender)
@@ -322,7 +322,7 @@ function RAA:StartCheck()
             end
         end
         if self.RefreshResults then self:RefreshResults() end
-        if RaidReadyDB and RaidReadyDB.autoWhisper then
+        if RAA.db and RAA.db.autoWhisper then
             self:WhisperOffenders(session)
         end
     end)
