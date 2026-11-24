@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.35.1
+
+- **Other players' spec changes are ignored now.** The game announces a spec change
+  for every unit it knows about: party and raid members, arena opponents,
+  nameplates, your target. The addon was reacting to each one as if it were your
+  own swap, which rescored your readiness for each one. In a solo shuffle that is a dozen or so
+  every round. Only your own spec change counts now.
+
 ## 0.35.0
 
 - **Runs on WoW Forever.** The addon now declares both 12.1.5 and 1.60.1, so one build

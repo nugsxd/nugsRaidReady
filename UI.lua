@@ -2009,7 +2009,6 @@ function RAA:InitReadinessEvents()
         "PLAYER_EQUIPMENT_CHANGED",     -- ilvl, enchants, tier, empowerment, set
         "UPDATE_INVENTORY_DURABILITY",  -- durability
         "PLAYER_MONEY",                 -- gold
-        "PLAYER_SPECIALIZATION_CHANGED",
         "TRAIT_CONFIG_UPDATED",         -- talent loadout
         "ACTIVE_PLAYER_SPECIALIZATION_CHANGED",
         "EQUIPMENT_SETS_CHANGED",       -- equipment manager
@@ -2018,6 +2017,9 @@ function RAA:InitReadinessEvents()
     }) do
         pcall(function() fr:RegisterEvent(e) end)
     end
+    -- Your spec only. The score is yours, and plainly registered this fires for every
+    -- raid member, arena opponent and nameplate too - in a raid, a rescore each time.
+    pcall(function() fr:RegisterUnitEvent("PLAYER_SPECIALIZATION_CHANGED", "player") end)
     fr:SetScript("OnEvent", function() RAA:ScheduleReadiness() end)
 end
 
